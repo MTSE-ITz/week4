@@ -1,17 +1,22 @@
-import { createContext, useContext } from "react";
+import { createContext, useState } from "react";
 
+// Tạo Context với giá trị mặc định
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext({
-  isAuthenticated: false,
-  user: {
-    email: "",
-    name: ""
+  auth: {
+    isAuthenticated: false,
+    user: {
+      email: "",
+      name: ""
+    },
   },
+  setAuth: () => {},
   appLoading: false,
+  setAppLoading: () => {}
 });
 
-export const AuthWrapper = (props) => {
-  const [auth, setAuth] = useContext({
+export const AuthWrapper = ({ children }) => {
+  const [auth, setAuth] = useState({
     isAuthenticated: false,
     user: {
       email: "",
@@ -19,12 +24,11 @@ export const AuthWrapper = (props) => {
     },
   });
 
-  const [appLoading, setAppLoading] = useContext(true);
+  const [appLoading, setAppLoading] = useState(false);
+
   return (
-    <AuthContext.Provider value={{ 
-      auth, setAuth, appLoading, setAppLoading 
-    }}>
-      {props.children}
+    <AuthContext.Provider value={{ auth, setAuth, appLoading, setAppLoading }}>
+      {children}
     </AuthContext.Provider>
-  )
+  );
 };
