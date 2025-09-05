@@ -23,6 +23,11 @@ const getUserApi = () => {
     return axios.get(URL_API)
 }
 
+const getProductApi = (page = 1, size = 10) => {
+    const URL_API = `/v1/api/product/list?page=${page}&size=${size}`;
+    return axios.get(URL_API);
+};
+
 export {
-    createUserApi, loginApi, getUserApi
+    createUserApi, loginApi, getUserApi, getProductApi
 }
