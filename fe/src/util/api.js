@@ -28,6 +28,11 @@ const getProductApi = (page = 1, size = 10) => {
     return axios.get(URL_API);
 };
 
+const searchProductApi = ({ q = "", category = "", minPrice, maxPrice, page = 1, limit = 6 }) => {
+    const params = { q, category, minPrice, maxPrice, page, size: limit };
+    return axios.get("/v1/api/product/search", { params });
+};
+
 export {
-    createUserApi, loginApi, getUserApi, getProductApi
+    createUserApi, loginApi, getUserApi, getProductApi, searchProductApi
 }
