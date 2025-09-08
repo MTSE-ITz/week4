@@ -1,5 +1,4 @@
-
-const { create, get, list } = require('../services/productService');
+const { create, get, list, search, syncData } = require('../services/productService');
 
 const createProduct = async (req, res) => {
   const data = await create(req.body);
@@ -17,4 +16,15 @@ const listProducts = async (req, res) => {
   return res.status(200).json(data);
 }
 
-module.exports = { createProduct, getProduct, listProducts }
+const searchProducts = async (req, res) => {
+  const { q, category, minPrice, maxPrice, page, limit } = req.query;
+  const data = await search({ q, category, minPrice, maxPrice, page, limit });
+  return res.status(200).json(data);
+}
+
+const syncProducts = async (req, res) => {
+  const data = await syncData();
+  return res.status(200).json(data);
+}
+
+module.exports = { createProduct, getProduct, listProducts, searchProducts, syncProducts }

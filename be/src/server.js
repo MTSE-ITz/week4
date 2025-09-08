@@ -7,6 +7,7 @@ const initWebRoutes = require('./routes/web.js');
 const cors = require('cors');
 const { getHomePage } = require('./controllers/homeControllers.js');
 const apiRoutes = require('./routes/api');
+const { connectElastic } = require('./config/elastic.js');
   
 const app = express();
 const port = process.env.PORT || 8888;
@@ -22,6 +23,7 @@ app.use('/v1/api', apiRoutes);
 
 // initWebRoutes(app);
 connectDB();
+connectElastic(); 
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
