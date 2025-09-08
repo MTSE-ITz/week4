@@ -11,14 +11,14 @@ const getProduct = async (req, res) => {
 }
 
 const listProducts = async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
-  const data = await list({ page, limit });
+  const { page = 1, size = 20 } = req.query;
+  const data = await list({ page, size });
   return res.status(200).json(data);
 }
 
 const searchProducts = async (req, res) => {
-  const { q, category, minPrice, maxPrice, page, limit } = req.query;
-  const data = await search({ q, category, minPrice, maxPrice, page, limit });
+  const { q, category, minPrice, maxPrice, page, size } = req.query;
+  const data = await search({ q, category, minPrice, maxPrice, page, size });
   return res.status(200).json(data);
 }
 

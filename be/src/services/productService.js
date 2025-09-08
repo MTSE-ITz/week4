@@ -42,18 +42,20 @@ const get = async (id) => {
   }
 }
 
-const list = async ({ page, limit }) => {
+const list = async ({ page, size }) => {
   try {
-    const offset = (page - 1) * limit;
+    console.log(">> limit: ", size);
+    
+    const offset = (page - 1) * size;
     const { count, rows } = await productRepository.findAndCountAll({
-      limit: parseInt(limit),
+      limit: parseInt(size),
       offset: parseInt(offset),
       order: [['createdAt', 'DESC']],
     });
 
     return {
       totalItems: count,
-      totalPages: Math.ceil(count / limit),
+      totalPages: Math.ceil(count / size),
       currentPage: parseInt(page),
       items: rows,
     };
@@ -63,7 +65,7 @@ const list = async ({ page, limit }) => {
   }
 }
 
-const search = async ({ q, category, minPrice, maxPrice, page = 1, limit = 20 }) => {
+const search = async ({ q, category, minPrice, maxPrice, page = 1, size = 20 }) => {
   try {
     // create index if not exist
     await ensureIndex()
@@ -94,12 +96,12 @@ const search = async ({ q, category, minPrice, maxPrice, page = 1, limit = 20 })
       filter.push({ range: { price: range } });
     }
 
-    const from = (page - 1) * limit;
+    const from = (page - 1) * size;
 
     const { hits } = await client.search({
       index: 'products',
       from,
-      size: limit,
+      size: size,
       query: {
         bool: {
           must,
@@ -112,7 +114,7 @@ const search = async ({ q, category, minPrice, maxPrice, page = 1, limit = 20 })
     return {
       success: true,
       totalItems: total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / size),
       currentPage: page,
       items: hits.hits.map(hit => hit._source)
     };

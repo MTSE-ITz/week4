@@ -71,7 +71,7 @@ const HomePage = () => {
       {/* Filter panel */}
       <div className="mb-6">
         <FilterPanel
-          categories={["Truyện", "Tiểu thuyết", "Kiến thức", "Khoa học"]}
+          categories={["Đạo đức", "Kiến thức", "Khoa học"]}
           filters={filters}
           onChange={handleFilterChange}
         />
@@ -79,7 +79,15 @@ const HomePage = () => {
 
       {/* Products */}
       {loading ? (
-        <div className="flex justify-center items-center py-20">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+            height: "60vh",
+          }}
+        >
           <Spin size="large" />
         </div>
       ) : products.length === 0 ? (
@@ -88,16 +96,23 @@ const HomePage = () => {
         <>
           <ProductList products={products} />
 
-          <div className="flex flex-col items-center mt-8 space-y-3">
-            <Pagination
-              current={page}
-              pageSize={pageSize}
-              total={total}
-              onChange={(p) => setPage(p)}
-              showSizeChanger={false}
-            />
-            <p className="text-gray-500">Tổng số kết quả: {total}</p>
-          </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            marginTop: "24px",
+            gap: "12px",
+          }}
+        >
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            onChange={(p) => setPage(p)}
+            showSizeChanger={false}
+          />
+        </div>
         </>
       )}
     </div>
