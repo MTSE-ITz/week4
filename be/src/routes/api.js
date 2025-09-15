@@ -3,6 +3,7 @@ const auth = require('../middleware/auth');
 const delay = require('../middleware/delay');
 const { createUser, handleLogin, getUser, getAccount } = require('../controllers/userController');
 const { createProduct, getProduct, listProducts, searchProducts, syncProducts } = require('../controllers/productController');
+const { addFavorite, removeFavorite, listFavorites, checkFavorite } = require('../controllers/favouriteController');
 
 const routerAPI = express.Router();
 
@@ -23,5 +24,11 @@ routerAPI.get('/product/get/:id', getProduct);
 routerAPI.get('/product/list', listProducts);
 routerAPI.get('/product/search', searchProducts);
 routerAPI.get('/product/sync', syncProducts);
+
+// favorite
+routerAPI.post('/favorite/create', addFavorite);
+routerAPI.get('/favorite/delete/:id', removeFavorite);
+routerAPI.get('/favorite/list/:userId', listFavorites);
+routerAPI.get('/favorite/check', checkFavorite); 
 
 module.exports = routerAPI;

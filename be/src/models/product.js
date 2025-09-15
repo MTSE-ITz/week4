@@ -5,6 +5,10 @@ module.exports = (sequelize, DataTypes) => {
   class Product extends Model {
     static associate(models) {
       // define association here
+      this.hasMany(models.Favorite, { foreignKey: 'productId', as: 'favorites' });
+      this.hasMany(models.RecentView, { foreignKey: 'productId', as: 'recentViews' });
+      this.hasMany(models.Order, { foreignKey: 'productId', as: 'orders' });
+      this.hasMany(models.Comment, { foreignKey: 'productId', as: 'comments' });
     }
   }
 
