@@ -34,6 +34,8 @@ const searchProductApi = ({ q = "", category = "", minPrice, maxPrice, page = 1,
 };
 
 const listFavouriteApi = (userID, page = 1, size = 10) => {
+    console.log("api userId: ", userID);
+    
     const URL_API = `/v1/api/favorite/list/${userID}?page=${page}&size=${size}`;
     return axios.get(URL_API);
 };

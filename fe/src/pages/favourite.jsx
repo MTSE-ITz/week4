@@ -13,6 +13,8 @@ const FavouritePage = ({ userId }) => {
   const fetchFavourites = async () => {
     try {
       setLoading(true);
+      console.log(">>> userId: ", userId);
+      
       const res = await listFavouriteApi(userId, page, pageSize);
       console.log(">>> res: ", res);
       

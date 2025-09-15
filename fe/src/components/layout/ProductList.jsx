@@ -1,5 +1,11 @@
 import React from "react";
 import { List, Card } from "antd";
+import { HeartOutlined } from "@ant-design/icons";
+
+const truncateText = (text, maxLength = 100) => {
+  if (!text) return "";
+  return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+};
 
 const ProductList = ({ products }) => {
   if (!products || products.length === 0) {
@@ -15,6 +21,7 @@ const ProductList = ({ products }) => {
           <List.Item key={item.id}>
             <Card
               hoverable
+              style={{ minHeight: 430 }}
               cover={
                 <img
                   alt={item.name}
@@ -22,11 +29,23 @@ const ProductList = ({ products }) => {
                   style={{ height: 200, objectFit: "cover" }}
                 />
               }
-              title={item.name}
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ fontWeight: "bold" }}>{item.name}</span>
+                  <HeartOutlined style={{ color: "#ff4d4f", fontSize: 20 }} />
+                </div>
+              }
             >
               <p>📚 Category: {item.category}</p>
               <p>💰 Price: {item.price} $</p>
-              <p>{item.description}</p>
+              {/* Rút gọn description nếu dài */}
+              <p>{truncateText(item.description, 120)}</p>
             </Card>
           </List.Item>
         )}
