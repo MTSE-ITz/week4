@@ -1,4 +1,4 @@
-const { add, remove, listByUser, isFavorite } = require('../services/favouriteService');
+const { add, remove, listByUser } = require('../services/favouriteService');
 
 const addFavorite = async (req, res) => {
   try {
@@ -38,20 +38,8 @@ const listFavorites = async (req, res) => {
   }
 };
 
-const checkFavorite = async (req, res) => {
-  try {
-    const { userId, productId } = req.query;
-    const data = await isFavorite(userId, productId);
-    return res.status(200).json({ isFavorite: data });
-  } catch (error) {
-    console.error('Error in checkFavorite:', error);
-    return res.status(500).json({ message: error.message });
-  }
-};
-
 module.exports = {
   addFavorite,
   removeFavorite,
-  listFavorites,
-  checkFavorite
+  listFavorites
 };

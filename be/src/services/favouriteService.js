@@ -62,19 +62,8 @@ const listByUser = async (userId, { page = 1, size = 20 } = {}) => {
   }
 };
 
-const isFavorite = async (userId, productId) => {
-  try {
-    const favorite = await favoriteRepository.findOne({ where: { userId, productId } });
-    return !!favorite;
-  } catch (error) {
-    console.error('Error checking favorite:', error);
-    return false;
-  }
-};
-
 module.exports = {
   add,
   remove,
-  listByUser,
-  isFavorite
+  listByUser
 };
