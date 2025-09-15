@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { UsergroupAddOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
+import { UsergroupAddOutlined, HomeOutlined, SettingOutlined, HeartOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/auth.context';
@@ -12,8 +12,18 @@ const Header = () => {
     const items = [
     {
         label: <Link to="/">Home Page</Link>,
-        key: 'home',
+        key: "home",
         icon: <HomeOutlined />,
+    },
+    {
+        label: <Link to="/favourites">Favourite Page</Link>,
+        key: "favourite",
+        icon: <HeartOutlined style={{ color: "#eb2f96" }} />,
+    },
+    {
+        label: <Link to="/">Order Page</Link>,
+        key: 'order',
+        icon: <HeartOutlined style={{ color: '#eb2f96' }} />,
     },
     ...(auth.isAuthenticated
         ? [

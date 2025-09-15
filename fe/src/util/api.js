@@ -33,6 +33,11 @@ const searchProductApi = ({ q = "", category = "", minPrice, maxPrice, page = 1,
     return axios.get("/v1/api/product/search", { params });
 };
 
+const listFavouriteApi = (userID, page = 1, size = 10) => {
+    const URL_API = `/v1/api/favorite/list/${userID}?page=${page}&size=${size}`;
+    return axios.get(URL_API);
+};
+
 export {
-    createUserApi, loginApi, getUserApi, getProductApi, searchProductApi
+    createUserApi, loginApi, getUserApi, getProductApi, searchProductApi, listFavouriteApi
 }
