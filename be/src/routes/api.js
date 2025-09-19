@@ -5,6 +5,7 @@ const { createUser, handleLogin, getUser, getAccount } = require('../controllers
 const { createProduct, getProduct, listProducts, searchProducts, syncProducts } = require('../controllers/productController');
 const { addFavorite, removeFavorite, listFavorites } = require('../controllers/favouriteController');
 const { addComment, removeComment, listCommentsByProduct} = require('../controllers/commentController');
+const { addOrder, removeOrder, listOrdersByUser, getOrderDetail } = require('../controllers/orderController');
 
 const routerAPI = express.Router();
 
@@ -37,9 +38,9 @@ routerAPI.get('/comment/delete/:id', removeComment);
 routerAPI.get('/comment/list/:productId', listCommentsByProduct);
 
 // order
-router.post('/create', addOrder);
-router.get('/delete/:id', removeOrder);
-router.get('/list/:userId', listOrdersByUser);
-router.get('/get/:id', getOrderDetail);
+routerAPI.post('/create', addOrder);
+routerAPI.get('/delete/:id', removeOrder);
+routerAPI.get('/list/:userId', listOrdersByUser);
+routerAPI.get('/get/:id', getOrderDetail);
 
 module.exports = routerAPI;
