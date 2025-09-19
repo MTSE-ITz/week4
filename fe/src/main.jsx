@@ -3,44 +3,55 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/global.css';
 
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
-
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RegisterPage from './pages/register.jsx';
 import UserPage from './pages/user.jsx';
 import HomePage from './pages/home.jsx';
 import LoginPage from './pages/login.jsx';
-import FavouritePage from './pages/favourite.jsx';
 import { AuthWrapper } from './components/context/auth.context.jsx';
+import ProductPage from './pages/product.jsx';
+import ProductDetailPage from './pages/productDetail.jsx';
+import FavoriteProduct from './pages/favoriteProduct.jsx';
+import ViewedProductPage from './pages/viewedProduct.jsx';
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <App />,
     children: [
       {
         index: true,
-        element: <HomePage />
+        element: <HomePage />,
       },
       {
-        path: "user",
-        element: <UserPage />
+        path: 'user',
+        element: <UserPage />,
       },
-      { 
-        path: "favourites", 
-        element: <FavouritePage userId={7} /> 
+      {
+        path: 'products',
+        element: <ProductPage />,
       },
-    ]
+      {
+        path: 'product/:id',
+        element: <ProductDetailPage />,
+      },
+      {
+        path: 'favorites',
+        element: <FavoriteProduct />,
+      },
+      {
+        path: 'viewed',
+        element: <ViewedProductPage />,
+      },
+    ],
   },
   {
-    path: "register",
-    element: <RegisterPage />
+    path: 'register',
+    element: <RegisterPage />,
   },
   {
-    path: "login",
-    element: <LoginPage />
+    path: 'login',
+    element: <LoginPage />,
   },
 ]);
 
@@ -49,5 +60,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <AuthWrapper>
       <RouterProvider router={router} />
     </AuthWrapper>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

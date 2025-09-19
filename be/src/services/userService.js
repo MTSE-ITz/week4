@@ -1,88 +1,115 @@
-require('dotenv').config();
+import dotenv, { config } from 'dotenv';
+import User from '../models/user.js';
+config();
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import client from '../config/elastic.js';
 
-const db = require("../models/index.js");
-const userRepository = db.User;
-
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const salt = bcrypt.genSaltSync(10);
+const saltRounds = 10;
 
 const createUserService = async (name, email, password) => {
   try {
-    const user = await userRepository.findOne({ where: { email: email } });
+    const user = await User.findOne({ email });
     if (user) {
-      console.log('User already exists');
+      console.log(
+        `>>>>>> Email existed, choose another email different from: ${email}`
+      );
       return null;
     }
 
-    const hashPassword = await bcrypt.hash(password, salt);
-    const data = await userRepository.create({
-      name,
-      email,
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+
+    let result = await User.create({
+      name: name,
+      email: email,
       password: hashPassword,
-      roleId: 'user',
+      role: 'User',
     });
-    return data;
+
+    await client.index({
+      index: 'users',
+      id: result._id.toString(),
+      document: {
+        name: result.name,
+        email: result.email,
+        role: result.role,
+      },
+    });
+
+    return result;
   } catch (error) {
-    console.error('Error creating user:', error);
-    return null;
+    console.log('🚀 ~ createUserService ~ error:', error.message);
   }
-}
+};
 
 const loginService = async (email, password) => {
   try {
-    const user = await userRepository.findOne({ where: { email } });
-    if (!user) {
-      console.log('User not found');
-      return null;
-    }
-    const isMatchPassword = await bcrypt.compare(password, user.password);
-    if (!isMatchPassword) {
-      return {
-        EC: 2,
-        EM: 'email or password not valid',
+    const user = await User.findOne({ email });
+    if (user) {
+      const isMatchPassword = await bcrypt.compare(password, user.password);
+      if (!isMatchPassword) {
+        return { EC: 2, EM: 'Email or password is invalid' };
+      } else {
+        const payload = {
+          id: user._id.toString(),
+          email: user.email,
+          name: user.name,
+        };
+        const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+          expiresIn: process.env.JWT_EXPIRE,
+        });
+
+        return {
+          EC: 0,
+          accessToken,
+          user: { email: user.email, name: user.name },
+        };
       }
-    }
-    const payload = {
-      email: user.email,
-      roleId: user.roleId
-    }
-    const access_token = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: process.env.JWT_EXPIRES_IN});
-    return {
-      EC: 0,
-      access_token,
-      user: {
-        email: user.email,
-        roleId: user.roleId
-      }
+    } else {
+      return { EC: 1, EM: 'Email or password is invalid' };
     }
   } catch (error) {
-    console.error('Error logging in user:', error);
+    console.log('🚀 ~ loginService ~ error:', error);
     return null;
   }
-}
+};
 
-const getUserService = async () => {
+const getUserService = async (page, size, q) => {
   try {
-    const result = await userRepository.findAll({
-      attributes: { exclude: ['password'] }
-    });
-    console.log({result});
-    
-    return {
-      EC: 0,
-      EM: 'Get user successfully',
-      data: result
-    }
-  } catch (error) {
-    console.error('Error getting users:', error);
-    return {
-      EC: 1,
-      EM: 'Error getting users'
-    }
-  }
-}
+    const skip = (page - 1) * size;
 
-module.exports = {
-  createUserService, loginService, getUserService
-}
+    const query = {};
+
+    if (q && typeof q === 'object') {
+      if (q.name && q.name.trim() !== '') {
+        query.name = { $regex: q.name, $options: 'i' };
+      }
+
+      if (q.email && q.email.trim() !== '') {
+        query.email = { $regex: q.email, $options: 'i' };
+      }
+
+      if (q.role && q.role.trim() !== '') {
+        query.role = q.role.toLowerCase();
+      }
+    }
+
+    const total = await User.countDocuments(query);
+
+    const users = await User.find(query)
+      .skip(skip)
+      .limit(size)
+      .sort({ createdAt: -1 });
+
+    return { data: users, total };
+  } catch (error) {
+    console.error('🚀 ~ getUserService ~ error:', error);
+    return { data: [], total: 0 };
+  }
+};
+
+const getAccountService = (req, res) => {
+  return res.status(200).json(req.user);
+};
+
+export { createUserService, loginService, getUserService, getAccountService };

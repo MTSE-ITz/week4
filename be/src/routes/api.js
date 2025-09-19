@@ -1,46 +1,108 @@
-const express = require('express');
-const auth = require('../middleware/auth');
-const delay = require('../middleware/delay');
-const { createUser, handleLogin, getUser, getAccount } = require('../controllers/userController');
-const { createProduct, getProduct, listProducts, searchProducts, syncProducts } = require('../controllers/productController');
-const { addFavorite, removeFavorite, listFavorites } = require('../controllers/favouriteController');
-const { addComment, removeComment, listCommentsByProduct} = require('../controllers/commentController');
-const { addOrder, removeOrder, listOrdersByUser, getOrderDetail } = require('../controllers/orderController');
+import express from 'express';
+
+import {
+  createCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+  getCategoryProductCounts,
+} from '../controllers/categoryController.js';
+
+import {
+  createProduct,
+  getAllProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  addViewedProduct,
+  getViewedProducts,
+  searchProducts,
+  getSimilarProducts,
+  deleteViewedProduct,
+} from '../controllers/productController.js';
+
+import delay from '../middleware/delay.js';
+import auth from '../middleware/auth.js';
+import {
+  createUser,
+  getAccount,
+  getUser,
+  handleLogin,
+} from '../controllers/userController.js';
+import {
+  addFavorite,
+  countFavorites,
+  getFavorites,
+  removeFavorite,
+} from '../controllers/favoriteController.js';
+import {
+  countUniqueUsersByProduct,
+  createOrder,
+  getUserOrders,
+} from '../controllers/orderController.js';
+import {
+  addComment,
+  deleteComment,
+  getCommentsByProduct,
+  getProductCommentersCount,
+  toggleDislikeComment,
+  toggleLikeComment,
+} from '../controllers/commentController.js';
 
 const routerAPI = express.Router();
 
-routerAPI.all("/{*any}", auth);
+// Auth middleware
+routerAPI.use(auth);
 
+// Basic route
 routerAPI.get('/', (req, res) => {
-  res.status(200).json({ message: 'Welcome to the API!' });
+  return res.status(200).json('22110447 - Lê Tấn Trụ');
 });
 
+// User routes
 routerAPI.post('/register', createUser);
 routerAPI.post('/login', handleLogin);
 routerAPI.get('/user', getUser);
 routerAPI.get('/account', delay, getAccount);
 
-// product
-routerAPI.post('/product/create', createProduct);
-routerAPI.get('/product/get/:id', getProduct);
-routerAPI.get('/product/list', listProducts);
-routerAPI.get('/product/search', searchProducts);
-routerAPI.get('/product/sync', syncProducts);
+// Category routes
+routerAPI.post('/category', auth, createCategory);
+routerAPI.get('/categories', auth, getAllCategories);
+routerAPI.get('/category/:id', auth, getCategoryById);
+routerAPI.put('/category/:id', auth, updateCategory);
+routerAPI.delete('/category/:id', auth, deleteCategory);
+routerAPI.get('/categories/count-products', auth, getCategoryProductCounts);
 
-// favorite
-routerAPI.post('/favorite/create', addFavorite);
-routerAPI.get('/favorite/delete/:id', removeFavorite);
-routerAPI.get('/favorite/list/:userId', listFavorites);
+// Product routes
+routerAPI.post('/product', auth, createProduct);
+routerAPI.get('/products', auth, getAllProducts);
+routerAPI.get('/product/:id', auth, getProductById);
+routerAPI.put('/product/:id', auth, updateProduct);
+routerAPI.delete('/product/:id', auth, deleteProduct);
+routerAPI.get('/product/:id/similar', auth, getSimilarProducts);
+routerAPI.post('/product/viewed/add', auth, addViewedProduct);
+routerAPI.get('/product/viewed/list', auth, getViewedProducts);
+routerAPI.delete('/product/viewed/:productId', auth, deleteViewedProduct);
+routerAPI.get('/products/search', auth, searchProducts);
 
-// comment
-routerAPI.post('/comment/create', addComment);
-routerAPI.get('/comment/delete/:id', removeComment);
-routerAPI.get('/comment/list/:productId', listCommentsByProduct);
+// Favorite routes
+routerAPI.post('/favorite/add', auth, addFavorite);
+routerAPI.get('/favorites', auth, getFavorites);
+routerAPI.delete('/favorite/:productId', auth, removeFavorite);
+routerAPI.get('/favorite/:productId/count', auth, countFavorites);
 
-// order
-routerAPI.post('/create', addOrder);
-routerAPI.get('/delete/:id', removeOrder);
-routerAPI.get('/list/:userId', listOrdersByUser);
-routerAPI.get('/get/:id', getOrderDetail);
+// Comment routes
+routerAPI.get('/product/:id/comment/count', auth, getProductCommentersCount);
+routerAPI.get('/product/:id/comments', auth, getCommentsByProduct);
+routerAPI.post('/product/:id/comment', auth, addComment);
+routerAPI.delete('/product/comment/:id', auth, deleteComment);
+routerAPI.put('/product/comment/:id/like', auth, toggleLikeComment);
+routerAPI.put('/product/comment/:id/dislike', auth, toggleDislikeComment);
 
-module.exports = routerAPI;
+// Order routes
+routerAPI.get('/order/count/:productId', auth, countUniqueUsersByProduct);
+routerAPI.post('/order/create', auth, createOrder);
+routerAPI.get('/order/list', auth, getUserOrders);
+
+export default routerAPI;

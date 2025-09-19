@@ -1,57 +1,83 @@
-const { add, remove, listByUser, getById } = require('../services/orderService');
+import {
+  countUniqueUsersByProductService,
+  createOrderService,
+  getUserOrdersService,
+} from '../services/orderService.js';
+import { ApiResponseListDto } from '../common/api-response-list.js';
+import { ApiResponse } from '../common/api-response.js';
 
-const addOrder = async (req, res) => {
+export const countUniqueUsersByProduct = async (req, res) => {
+  const start = Date.now();
   try {
-    const { userId, productId, quantity } = req.body;
-    const data = await add(userId, productId, quantity);
-    if (!data) return res.status(400).json({ message: 'Cannot create order' });
-    return res.status(200).json(data);
+    const { productId } = req.params;
+    const totalPurchases = await countUniqueUsersByProductService(productId);
+
+    const response = new ApiResponseListDto({
+      result: true,
+      message: 'Count purchase successfully',
+      data: { productId, totalPurchases },
+      path: req.originalUrl,
+      takenTime: Date.now() - start,
+    });
+
+    res.json(response);
   } catch (error) {
-    console.error('Error in addOrder:', error);
-    return res.status(500).json({ message: error.message });
+    res.status(500).json({ result: false, message: error.message });
   }
 };
 
-const removeOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
+  const start = Date.now();
   try {
-    const { id } = req.params;
-    const data = await remove(id);
-    if (!data) return res.status(404).json({ message: 'Order not found' });
-    return res.status(200).json(data);
+    const userId = req.user.id;
+    const { products } = req.body;
+
+    const order = await createOrderService(userId, products);
+
+    const response = new ApiResponseListDto({
+      result: true,
+      message: 'Create order successfully',
+      data: order,
+      path: req.originalUrl,
+      takenTime: Date.now() - start,
+    });
+
+    res.status(201).json(response);
   } catch (error) {
-    console.error('Error in removeOrder:', error);
-    return res.status(500).json({ message: error.message });
+    const response = new ApiResponse({
+      result: false,
+      message: error.message,
+      path: req.originalUrl,
+      takenTime: Date.now() - start,
+    });
+    res.status(500).json(response);
   }
 };
 
-const listOrdersByUser = async (req, res) => {
+export const getUserOrders = async (req, res) => {
+  const start = Date.now();
   try {
-    const { userId } = req.params;
-    const { page = 1, size = 20 } = req.query;
+    const userId = req.user.id;
 
-    const data = await listByUser(userId, { page, size });
-    return res.status(200).json(data);
+    const orders = await getUserOrdersService(userId);
+
+    const response = new ApiResponseListDto({
+      result: true,
+      data: orders,
+      message: 'Get order list successfully',
+      path: req.originalUrl,
+      takenTime: Date.now() - start,
+    });
+
+    res.json(response);
   } catch (error) {
-    console.error('Error in listOrdersByUser:', error);
-    return res.status(500).json({ message: error.message });
+    const response = new ApiResponseListDto({
+      result: false,
+      data: null,
+      message: error.message,
+      path: req.originalUrl,
+      takenTime: Date.now() - start,
+    });
+    res.status(500).json(response);
   }
-};
-
-const getOrderDetail = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const data = await getById(id);
-    if (!data) return res.status(404).json({ message: 'Order not found' });
-    return res.status(200).json(data);
-  } catch (error) {
-    console.error('Error in getOrderDetail:', error);
-    return res.status(500).json({ message: error.message });
-  }
-};
-
-module.exports = {
-  addOrder,
-  removeOrder,
-  listOrdersByUser,
-  getOrderDetail,
 };

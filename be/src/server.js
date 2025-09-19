@@ -1,16 +1,16 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
-const express = require('express');
-const configViewEngine = require('./config/viewEngine');
-const connectDB = require('./config/configdb');
-const initWebRoutes = require('./routes/web.js');
-const cors = require('cors');
-const { getHomePage } = require('./controllers/homeControllers.js');
-const apiRoutes = require('./routes/api');
-const { connectElastic } = require('./config/elastic.js');
-  
+import express from 'express';
+import configViewEngine from './config/viewEngine.js';
+import apiRoutes from './routes/api.js';
+import connection from './config/database.js';
+import { getHomePage } from './controllers/homeController.js';
+import cors from 'cors';
 const app = express();
+
 const port = process.env.PORT || 8888;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -21,10 +21,13 @@ webAPI.get('/', getHomePage);
 app.use('/', webAPI);
 app.use('/v1/api', apiRoutes);
 
-// initWebRoutes(app);
-connectDB();
-connectElastic(); 
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+(async () => {
+  try {
+    await connection();
+    app.listen(port, () =>
+      console.log(`Backend Nodejs App listening on port ${port}`)
+    );
+  } catch (error) {
+    console.log('🚀 Error while connecting to database:', error);
+  }
+})();

@@ -1,87 +1,42 @@
-const db = require('../models/index.js');
-const orderRepository = db.Order;
-const productRepository = db.Product;
-const userRepository = db.User;
+import Order from '../models/order.js';
 
-const add = async (userId, productId, quantity = 1) => {
-  try {
-    const user = await userRepository.findByPk(userId);
-    if (!user) throw new Error('User not found');
+export const countUniqueUsersByProductService = async (productId) => {
+  const orders = await Order.find({ 'products.product': productId }).select(
+    'user'
+  );
 
-    const product = await productRepository.findByPk(productId);
-    if (!product) throw new Error('Product not found');
-
-    const order = await orderRepository.create({
-      userId,
-      productId,
-      quantity
-    });
-
-    return order;
-  } catch (error) {
-    console.error('Error adding order:', error);
-    return null;
-  }
+  return orders.length;
 };
 
-const remove = async (id) => {
-  try {
-    const order = await orderRepository.findByPk(id);
-    if (!order) return null;
-
-    await order.destroy();
-    return { message: 'Order removed successfully' };
-  } catch (error) {
-    console.error('Error removing order:', error);
-    return null;
+export const createOrderService = async (userId, products) => {
+  if (!products || !products.length) {
+    throw new Error('Danh sách sản phẩm là bắt buộc');
   }
+
+  const order = new Order({
+    user: userId,
+    products: products.map((p) => ({
+      product: p.productId,
+      quantity: p.quantity || 1,
+    })),
+    status: 'pending',
+  });
+
+  await order.save();
+  return order;
 };
 
-const listByUser = async (userId, { page = 1, size = 20 } = {}) => {
-  try {
-    const limit = parseInt(size, 10);
-    const offset = (parseInt(page, 10) - 1) * limit;
+export const getUserOrdersService = async (userId) => {
+  const orders = await Order.find({ user: userId })
+    .populate('products.product', 'name price images')
+    .sort({ createdAt: -1 });
 
-    const { count, rows } = await orderRepository.findAndCountAll({
-      where: { userId },
-      include: [
-        { model: productRepository, as: 'product' }
-      ],
-      limit,
-      offset,
-      order: [['createdAt', 'DESC']]
-    });
+  const totalElements = await Order.countDocuments({ user: userId });
+  const totalPages = Math.ceil(totalElements);
 
-    return {
-      totalItems: count,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      items: rows
-    };
-  } catch (error) {
-    console.error('Error listing orders:', error);
-    return null;
-  }
-};
-
-const getById = async (id) => {
-  try {
-    const order = await orderRepository.findByPk(id, {
-      include: [
-        { model: productRepository, as: 'product' },
-        { model: userRepository, as: 'user' }
-      ]
-    });
-    return order || null;
-  } catch (error) {
-    console.error('Error getting order by id:', error);
-    return null;
-  }
-};
-
-module.exports = {
-  add,
-  remove,
-  listByUser,
-  getById
+  return {
+    content: orders,
+    totalPages,
+    totalElements,
+  };
 };

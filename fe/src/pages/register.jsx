@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button, Col, Divider, Form, Input, notification, Row } from 'antd';
-import { createUserApi } from './../util/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { createUserApi } from '../util/api';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -14,37 +14,39 @@ const RegisterPage = () => {
 
     if (res) {
       notification.success({
-        message: "CREATE USER",
-        description: "Success"
+        message: 'CREATE USER',
+        description: 'Success',
       });
-      navigate("/login");
+      navigate('/login');
     } else {
       notification.error({
-        message: "CREATE USER",
-        description: "error"
+        message: 'CREATE USER',
+        description: 'error',
       });
     }
   };
 
   return (
-    <Row justify="center" style={{ marginTop: "30px" }}>
+    <Row justify={'center'} style={{ marginTop: '30px' }}>
       <Col xs={24} md={16} lg={8}>
-        <fieldset style={{
-          padding: "15px",
-          margin: "5px",
-          border: "1px solid #ccc",
-          borderRadius: "5px"
-        }}>
+        <fieldset
+          style={{
+            padding: '15px',
+            margin: '5px',
+            border: '1px solid #ccc',
+            borderRadius: '5px',
+          }}
+        >
           <legend>Đăng Ký Tài Khoản</legend>
           <Form
-            name="basic"
+            name='basic'
             onFinish={onFinish}
-            autoComplete="off"
-            layout="vertical"
+            autoComplete='off'
+            layout='vertical'
           >
             <Form.Item
-              label="Email"
-              name="email"
+              label='Email'
+              name='email'
               rules={[
                 {
                   required: true,
@@ -56,8 +58,8 @@ const RegisterPage = () => {
             </Form.Item>
 
             <Form.Item
-              label="Password"
-              name="password"
+              label='Password'
+              name='password'
               rules={[
                 {
                   required: true,
@@ -69,8 +71,8 @@ const RegisterPage = () => {
             </Form.Item>
 
             <Form.Item
-              label="Name"
-              name="name"
+              label='Name'
+              name='name'
               rules={[
                 {
                   required: true,
@@ -82,20 +84,17 @@ const RegisterPage = () => {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit">
+              <Button type='primary' htmlType='submit'>
                 Submit
               </Button>
             </Form.Item>
           </Form>
-
-          <Link to={"/"}>
+          <Link to={'/'}>
             <ArrowLeftOutlined /> Quay lại trang chủ
           </Link>
-
           <Divider />
-
-          <div style={{ textAlign: "center" }}>
-            Đã có tài khoản? <Link to={"/login"}>Đăng nhập</Link>
+          <div style={{ textAlign: 'center' }}>
+            Đã có tài khoản? <Link to={'/login'}>Đăng nhập</Link>
           </div>
         </fieldset>
       </Col>

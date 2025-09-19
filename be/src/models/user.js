@@ -1,33 +1,13 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+import mongoose from 'mongoose';
 
-module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    static associate(models) {
-      // define association here
-      this.hasMany(models.Favorite, { foreignKey: 'userId', as: 'favorites' });
-      this.hasMany(models.RecentView, { foreignKey: 'userId', as: 'recentViews' });
-      this.hasMany(models.Order, { foreignKey: 'userId', as: 'orders' });
-      this.hasMany(models.Comment, { foreignKey: 'userId', as: 'comments' });
-    }
-  }
-  User.init({
-    email: DataTypes.STRING,
-    password: DataTypes.STRING,
-    firstName: DataTypes.STRING,
-    lastName: DataTypes.STRING,
-    address: DataTypes.STRING,
-    phoneNumber: DataTypes.STRING,
-    gender: DataTypes.BOOLEAN,
-    image: DataTypes.STRING,
-    roleId: DataTypes.STRING,
-    positionId: DataTypes.STRING,
-  }, {
-    sequelize,
-    modelName: 'User',
-    tableName: 'users',
-  });
-  return User;
-}
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  role: String,
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  viewedProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+});
+
+const User = mongoose.model('User', userSchema);
+export default User;

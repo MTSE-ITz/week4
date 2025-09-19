@@ -1,16 +1,20 @@
-const { Model } = require("sequelize");
+import mongoose from 'mongoose';
 
-module.exports = (sequelize, DataTypes) => {
-  class Order extends Model {
-    static associate(models) {
-      this.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      this.belongsTo(models.Product, { foreignKey: 'productId', as: 'product' });
-    }
-  }
-  Order.init({
-    userId: DataTypes.INTEGER,
-    productId: DataTypes.INTEGER,
-    quantity: DataTypes.INTEGER,
-  }, { sequelize, modelName: 'Order', tableName: 'orders' });
-  return Order;
-};
+const orderSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  products: [
+    {
+      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      quantity: { type: Number, default: 1 },
+    },
+  ],
+  status: {
+    type: String,
+    enum: ['pending', 'paid', 'shipped'],
+    default: 'pending',
+  },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Order = mongoose.model('Order', orderSchema);
+export default Order;

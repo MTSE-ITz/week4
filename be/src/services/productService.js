@@ -1,183 +1,177 @@
-require('dotenv').config();
+import mongoose from 'mongoose';
+import Product from '../models/product.js';
+import User from '../models/user.js';
 
-const db = require("../models/index.js");
-const productRepository = db.Product;
-const { client } = require('../config/elastic');
+export const createProductService = async (data) => {
+  const product = new Product(data);
+  return await product.save();
+};
 
-const create = async (data) => {
-  try {
-    const product = await productRepository.create(data);
+export const getAllProductsService = async (page = 1, size = 10) => {
+  const skip = (page - 1) * size;
 
-    // create index if not exist
-    await ensureIndex()
+  const totalElements = await Product.countDocuments();
 
-    await client.index({
-      index: 'products',
-      id: product.id.toString(),
-      document: {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        isFeatured: product.isFeatured,
-        quantity: product.quantity,
-        image: product.image,
-        createdAt: product.createdAt
-      }
-    });
-    return product;
-  } catch (error) {
-    console.error('Error creating product:', error);
-    return null;
+  const products = await Product.find()
+    .populate('category', 'name description')
+    .skip(skip)
+    .limit(size);
+
+  const totalPages = Math.ceil(totalElements / size);
+
+  return {
+    content: products,
+    totalPages,
+    totalElements,
+  };
+};
+
+export const getProductByIdService = async (id) => {
+  return await Product.findById(id).populate('category', 'name description');
+};
+
+export const updateProductService = async (id, data) => {
+  return await Product.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true,
+  }).populate('category', 'name description');
+};
+
+export const deleteProductService = async (id) => {
+  return await Product.findByIdAndDelete(id);
+};
+
+export const getSimilarProductsService = async (
+  productId,
+  page = 1,
+  size = 4
+) => {
+  const product = await Product.findById(productId);
+  if (!product) throw new Error('Không tìm thấy sản phẩm');
+
+  const skip = (page - 1) * size;
+
+  const totalElements = await Product.countDocuments({
+    category: product.category,
+    _id: { $ne: product._id },
+  });
+
+  const products = await Product.find({
+    category: product.category,
+    _id: { $ne: product._id },
+  })
+    .populate('category', 'name description')
+    .skip(skip)
+    .limit(size);
+
+  const totalPages = Math.ceil(totalElements / size);
+
+  return {
+    content: products,
+    totalPages,
+    totalElements,
+  };
+};
+
+export const addViewedProductService = async (userId, productId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new Error('Invalid product ID');
   }
-}
 
-const get = async (id) => {
-  try {
-    return await productRepository.findOne({id: id});
-  } catch (error) {
-    console.error('Error get product:', error);
-    return null;
+  const productExists = await Product.findById(productId);
+  if (!productExists) throw new Error('Product not found');
+
+  user.viewedProducts = user.viewedProducts.filter(
+    (id) => id.toString() !== productId
+  );
+
+  user.viewedProducts.unshift(productId);
+
+  if (user.viewedProducts.length > 10) {
+    user.viewedProducts = user.viewedProducts.slice(0, 10);
   }
-}
 
-const list = async ({ page, size }) => {
-  try {
-    console.log(">> limit: ", size);
-    
-    const offset = (page - 1) * size;
-    const { count, rows } = await productRepository.findAndCountAll({
-      limit: parseInt(size),
-      offset: parseInt(offset),
-      order: [['createdAt', 'DESC']],
-    });
+  await user.save();
+  return user.viewedProducts;
+};
 
-    return {
-      totalItems: count,
-      totalPages: Math.ceil(count / size),
-      currentPage: parseInt(page),
-      items: rows,
-    };
-  } catch (error) {
-    console.error('Error listing products:', error);
-    return null;
+export const getViewedProductsService = async (userId) => {
+  const user = await User.findById(userId).populate({
+    path: 'viewedProducts',
+    populate: {
+      path: 'category',
+      select: 'name description',
+    },
+  });
+  return {
+    content: user.viewedProducts,
+    totalElements: user.viewedProducts.length,
+    totalPages: 1,
+  };
+};
+
+export const deleteViewedProductService = async (userId, productId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('Người dùng không tồn tại');
+
+  const pid = new mongoose.Types.ObjectId(productId);
+
+  user.viewedProducts = user.viewedProducts.filter((pId) => !pId.equals(pid));
+  await user.save();
+};
+
+export const searchProductsService = async (filters) => {
+  const query = {};
+
+  if (filters.name) {
+    query.name = { $regex: filters.name, $options: 'i' };
   }
-}
 
-const search = async ({ q, category, minPrice, maxPrice, page = 1, size = 20 }) => {
-  try {
-    // create index if not exist
-    await ensureIndex()
-
-    const must = [];
-    const filter = [];
-
-    if (q) {
-      must.push({
-        multi_match: {
-          query: q,
-          fields: ['name^3', 'category^2', 'description'],
-          fuzziness: 'AUTO'
-        }
-      });
-    }
-
-    if (category) {
-      filter.push({
-        match: { category }
-      });
-    }
-
-    if (minPrice || maxPrice) {
-      const range = {};
-      if (minPrice) range.gte = minPrice;
-      if (maxPrice) range.lte = maxPrice;
-      filter.push({ range: { price: range } });
-    }
-
-    const from = (page - 1) * size;
-
-    const { hits } = await client.search({
-      index: 'products',
-      from,
-      size: size,
-      query: {
-        bool: {
-          must,
-          filter
-        }
-      },
-      sort: [{ createdAt: 'desc' }]
-    });
-    const total = typeof hits.total === 'number' ? hits.total : hits.total.value;
-    return {
-      success: true,
-      totalItems: total,
-      totalPages: Math.ceil(total / size),
-      currentPage: page,
-      items: hits.hits.map(hit => hit._source)
-    };
-  } catch (error) {
-    console.error('Error searching products:', error);
-    return null;
+  if (filters.brand) {
+    query.brand = { $regex: filters.brand, $options: 'i' };
   }
-}
 
-async function ensureIndex() {
-  const index = "products";
-  const exists = await client.indices.exists({ index });
-  if (!exists) {
-    await client.indices.create({
-      index,
-      body: {
-        mappings: {
-          properties: {
-            name: { type: "text" },
-            description: { type: "text" },
-            price: { type: "float" },
-            createdAt: { type: "date" }
-          }
-        }
-      }
-    });
-    console.log(`Created index ${index}`);
+  if (filters.category) {
+    query.category = filters.category;
   }
-}
 
-const syncData = async() => {
-  try {
-    const products = await productRepository.findAll();
-
-    for (const product of products) {
-      await client.index({
-        index: "products",
-        id: product.id.toString(),
-        document: {
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          category: product.category,
-          isFeatured: product.isFeatured,
-          quantity: product.quantity,
-          image: product.image,
-          createdAt: product.createdAt,
-        },
-      });
-    }
-
-    return {
-      success: true,
-      message: "Đã sync toàn bộ sản phẩm từ DB sang Elasticsearch",
-      total: products.length,
-    };
-  } catch (error) {
-    console.error("❌ Error syncing products:", error);
-    throw new Error("Lỗi khi sync dữ liệu: " + error.message);
+  if (filters.minPrice || filters.maxPrice) {
+    query.price = {};
+    if (filters.minPrice) query.price.$gte = Number(filters.minPrice);
+    if (filters.maxPrice) query.price.$lte = Number(filters.maxPrice);
   }
-}
 
-module.exports = {
-  create, get, list, search, syncData
-}
+  if (filters.inStock !== undefined) {
+    query.inStock = filters.inStock === 'true';
+  }
+
+  if (filters.ram) {
+    query['specifications.ram'] = filters.ram;
+  }
+
+  if (filters.os) {
+    query['specifications.os'] = { $regex: filters.os, $options: 'i' };
+  }
+
+  const page = parseInt(filters.page) || 1;
+  const size = parseInt(filters.size) || 10;
+  const skip = (page - 1) * size;
+
+  const totalElements = await Product.countDocuments(query);
+
+  const products = await Product.find(query)
+    .populate('category', 'name description')
+    .skip(skip)
+    .limit(size);
+
+  const totalPages = Math.ceil(totalElements / size);
+
+  return {
+    content: products,
+    totalPages,
+    totalElements,
+  };
+};

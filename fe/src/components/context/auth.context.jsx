@@ -1,34 +1,27 @@
-import { createContext, useState } from "react";
+import { createContext, useState } from 'react';
 
-// Tạo Context với giá trị mặc định
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext({
-  auth: {
-    isAuthenticated: false,
-    user: {
-      email: "",
-      name: ""
-    },
+  isAuthenticated: false,
+  user: {
+    email: '',
+    name: '',
   },
-  setAuth: () => {},
-  appLoading: false,
-  setAppLoading: () => {}
+  appLoading: true,
 });
 
-export const AuthWrapper = ({ children }) => {
+export const AuthWrapper = (props) => {
   const [auth, setAuth] = useState({
     isAuthenticated: false,
     user: {
-      email: "",
-      name: ""
+      email: '',
+      name: '',
     },
   });
 
-  const [appLoading, setAppLoading] = useState(false);
-
+  const [appLoading, setAppLoading] = useState(true);
   return (
     <AuthContext.Provider value={{ auth, setAuth, appLoading, setAppLoading }}>
-      {children}
+      {props.children}
     </AuthContext.Provider>
   );
 };

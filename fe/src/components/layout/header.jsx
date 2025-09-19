@@ -1,79 +1,102 @@
-import React, { useContext, useState } from 'react';
-import { UsergroupAddOutlined, HomeOutlined, SettingOutlined, HeartOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import { Menu } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/auth.context';
+import { useContext, useState } from 'react';
+import { Menu } from 'antd';
+import {
+  UsergroupAddOutlined,
+  HomeOutlined,
+  SettingOutlined,
+  HeartOutlined,
+  HistoryOutlined,
+} from '@ant-design/icons';
 
 const Header = () => {
-    const navigate = useNavigate();
-    const { auth, setAuth } = useContext(AuthContext);
-    console.log(">>> check auth: ", auth);
-
-    const items = [
+  const navigate = useNavigate();
+  const { auth, setAuth } = useContext(AuthContext);
+  const [current, setCurrent] = useState('mail');
+  console.log('>>> check auth: ', auth);
+  const items = [
     {
-        label: <Link to="/">Home Page</Link>,
-        key: "home",
-        icon: <HomeOutlined />,
-    },
-    {
-        label: <Link to="/favourites">Favourite Page</Link>,
-        key: "favourite",
-        icon: <HeartOutlined />,
-    },
-    {
-        label: <Link to="/">Order Page</Link>,
-        key: 'order',
-        icon: <ShoppingCartOutlined />,
+      label: <Link to={'/'}>Home Page</Link>,
+      key: 'home',
+      icon: <HomeOutlined />,
     },
     ...(auth.isAuthenticated
-        ? [
-            {
-            label: <Link to="/user">Users</Link>,
+      ? [
+          {
+            label: <Link to={'/user'}>Users</Link>,
             key: 'user',
             icon: <UsergroupAddOutlined />,
-            },
+          },
+          {
+            label: <Link to={'/products'}>Products</Link>,
+            key: 'product',
+            icon: <UsergroupAddOutlined />,
+          },
+          {
+            label: <Link to={'/favorites'}>Favorite Product</Link>,
+            key: 'favorite-product',
+            icon: <HeartOutlined />,
+          },
+          {
+            label: <Link to={'/viewed'}>Viewed Product</Link>,
+            key: 'viewed-product',
+            icon: <HistoryOutlined />,
+          },
         ]
-        : []),
+      : []),
+
     {
-        label: `Welcome ${auth?.user?.email ?? ""}`,
-        key: 'SubMenu',
-        icon: <SettingOutlined />,
-        children: auth.isAuthenticated
-        ? [
-            {
+      label: `Welcome ${auth?.user?.email ?? ''}`,
+      key: 'SubMenu',
+      icon: <SettingOutlined />,
+      children: [
+        ...(auth.isAuthenticated
+          ? [
+              {
                 label: (
-                <span
+                  <span
                     onClick={() => {
-                    localStorage.removeItem("access_token");
-                    setAuth({
+                      localStorage.clear('access_token');
+                      setCurrent('home');
+                      setAuth({
                         isAuthenticated: false,
-                        user: { email: "", name: "" },
-                    });
-                    navigate("/");
+                        user: {
+                          email: '',
+                          name: '',
+                        },
+                      });
+                      navigate('/');
                     }}
-                >
+                  >
                     Đăng xuất
-                </span>
+                  </span>
                 ),
                 key: 'logout',
-            },
+              },
             ]
-        : [
-            {
-                label: <Link to="/login">Đăng nhập</Link>,
+          : [
+              {
+                label: <Link to={'/login'}>Đăng nhập</Link>,
                 key: 'login',
-            },
-            ],
+              },
+            ]),
+      ],
     },
-    ];
-
-    const [current, setCurrent] = useState('home');
-    const onClick = (e) => {
+  ];
+  const onClick = (e) => {
     console.log('click ', e);
     setCurrent(e.key);
-    };
+  };
 
-    return <Menu onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} />;
+  return (
+    <Menu
+      onClick={onClick}
+      selectedKeys={[current]}
+      mode='horizontal'
+      items={items}
+    />
+  );
 };
 
 export default Header;

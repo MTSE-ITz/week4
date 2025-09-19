@@ -1,62 +1,30 @@
-'use strict';
-const { Model } = require('sequelize');
+import mongoose from 'mongoose';
 
-module.exports = (sequelize, DataTypes) => {
-  class Product extends Model {
-    static associate(models) {
-      // define association here
-      this.hasMany(models.Favorite, { foreignKey: 'productId', as: 'favorites' });
-      this.hasMany(models.RecentView, { foreignKey: 'productId', as: 'recentViews' });
-      this.hasMany(models.Order, { foreignKey: 'productId', as: 'orders' });
-      this.hasMany(models.Comment, { foreignKey: 'productId', as: 'comments' });
-    }
-  }
+const productSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  brand: { type: String, required: true },
+  price: { type: Number, required: true },
+  description: { type: String },
+  specifications: {
+    screen: String,
+    cpu: String,
+    ram: String,
+    storage: String,
+    battery: String,
+    camera: String,
+    os: String,
+  },
+  images: [String],
+  inStock: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  totalSold: { type: Number, default: 0 },
+  totalReviews: { type: Number, default: 0 },
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  },
+});
 
-  Product.init({
-    name: {
-      type: DataTypes.STRING,
-    },
-    description: {
-      type: DataTypes.TEXT,
-    },
-    price: {
-      type: DataTypes.FLOAT,
-    },
-    releaseDate: {
-      type: DataTypes.DATE,
-    },
-    length: {
-      type: DataTypes.FLOAT,
-    },
-    width: {
-      type: DataTypes.FLOAT,
-    },
-    height: {
-      type: DataTypes.FLOAT,
-    },
-    ageRating: {
-      type: DataTypes.INTEGER,
-    },
-    isFeatured: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    category: {
-      type: DataTypes.STRING,
-    },
-    image: {
-      type: DataTypes.STRING,
-    },
-  }, {
-    sequelize,
-    modelName: 'Product',
-    tableName: 'products',
-    timestamps: true,
-  });
-
-  return Product;
-};
+const Product = mongoose.model('Product', productSchema);
+export default Product;

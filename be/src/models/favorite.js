@@ -1,15 +1,14 @@
-const { Model } = require("sequelize");
+import mongoose from 'mongoose';
 
-module.exports = (sequelize, DataTypes) => {
-  class Favorite extends Model {
-    static associate(models) {
-      this.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      this.belongsTo(models.Product, { foreignKey: 'productId', as: 'product' });
-    }
-  }
-  Favorite.init({
-    userId: DataTypes.INTEGER,
-    productId: DataTypes.INTEGER,
-  }, { sequelize, modelName: 'Favorite', tableName: 'favorites' });
-  return Favorite;
-};
+const favoriteSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Favorite = mongoose.model('Favorite', favoriteSchema);
+export default Favorite;

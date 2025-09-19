@@ -1,71 +1,90 @@
-const db = require('../models/index.js');
-const commentRepository = db.Comment;
-const productRepository = db.Product;
-const userRepository = db.User;
+import mongoose from 'mongoose';
+import Comment from '../models/comment.js';
 
-const add = async (userId, productId, content) => {
-  try {
-    const user = await userRepository.findByPk(userId);
-    if (!user) throw new Error('User not found');
+export const countUniqueCommentersService = async (productId) => {
+  const commenters = await Comment.aggregate([
+    { $match: { product: new mongoose.Types.ObjectId(productId) } },
+    {
+      $group: {
+        _id: '$user',
+      },
+    },
+    {
+      $count: 'uniqueCommenters',
+    },
+  ]);
 
-    const product = await productRepository.findByPk(productId);
-    if (!product) throw new Error('Product not found');
-
-    const comment = await commentRepository.create({
-      userId,
-      productId,
-      content
-    });
-
-    return comment;
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    return null;
-  }
+  return commenters.length > 0 ? commenters[0].uniqueCommenters : 0;
 };
 
-const remove = async (id) => {
-  try {
-    const comment = await commentRepository.findByPk(id);
-    if (!comment) return null;
+export const getCommentsByProductService = async (productId) => {
+  const comments = await Comment.find({ product: productId })
+    .populate('user', 'name email')
+    .sort({ createdAt: -1 });
 
-    await comment.destroy();
-    return { message: 'Comment removed successfully' };
-  } catch (error) {
-    console.error('Error removing comment:', error);
-    return null;
-  }
+  const totalElements = await Comment.countDocuments({ product: productId });
+  const totalPages = Math.ceil(totalElements);
+
+  return {
+    content: comments,
+    totalPages,
+    totalElements,
+  };
 };
 
-const listByProduct = async (productId, { page = 1, size = 20 } = {}) => {
-  try {
-    const limit = parseInt(size, 10);
-    const offset = (parseInt(page, 10) - 1) * limit;
-
-    const { count, rows } = await commentRepository.findAndCountAll({
-      where: { productId },
-      include: [
-        { model: userRepository, as: 'user', attributes: ['id', 'name', 'email'] }
-      ],
-      limit,
-      offset,
-      order: [['createdAt', 'DESC']]
-    });
-
-    return {
-      totalItems: count,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      items: rows
-    };
-  } catch (error) {
-    console.error('Error listing comments:', error);
-    return null;
-  }
+export const addCommentService = async (productId, userId, content) => {
+  const comment = new Comment({
+    product: productId,
+    user: userId,
+    content,
+  });
+  return await comment.save();
 };
 
-module.exports = {
-  add,
-  remove,
-  listByProduct,
+export const deleteCommentService = async (commentId, userId) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) return null;
+
+  if (comment.user.toString() !== userId.toString()) {
+    throw new Error('Bạn không có quyền xóa comment này');
+  }
+
+  await Comment.findByIdAndDelete(commentId);
+  return comment;
+};
+
+export const toggleLikeCommentService = async (commentId, userId) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) throw new Error('Comment not found');
+
+  const hasLiked = comment.likes.includes(userId);
+  const hasDisliked = comment.dislikes.includes(userId);
+
+  if (hasLiked) {
+    comment.likes.pull(userId);
+  } else {
+    comment.likes.push(userId);
+    if (hasDisliked) comment.dislikes.pull(userId);
+  }
+
+  await comment.save();
+  return comment;
+};
+
+export const toggleDislikeCommentService = async (commentId, userId) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) throw new Error('Comment not found');
+
+  const hasDisliked = comment.dislikes.includes(userId);
+  const hasLiked = comment.likes.includes(userId);
+
+  if (hasDisliked) {
+    comment.dislikes.pull(userId);
+  } else {
+    comment.dislikes.push(userId);
+    if (hasLiked) comment.likes.pull(userId);
+  }
+
+  await comment.save();
+  return comment;
 };
